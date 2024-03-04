@@ -1,0 +1,306 @@
+For Integration:
+
+IMPORT modules
+READ IN FILE login.csv
+SET publicKey (array) TO readKey('publickey.csv')
+SET privateKey (array) TO readKey('privatekey.csv')
+
+SET users (array of objects) TO readLoginCSV(file,privateKey)
+
+SET UP FLASK
+
+FLASK ROUTE: THE PATH IS '/'
+    RENDER THE HTML TEMPLATE 'index.html'
+
+FLASK ROUTE: THE LOGIN FORM IS SUBMITTED
+    IF THE METHOD OF THE FORM IS POST
+        GET username AND password FROM THE FORM AND STORE THEM AS STRINGS
+        SET valid (boolean) TO validateLogin(username,password,users)
+        IF valid IS TRUE
+            SET THE SESSION VARIABLE username TO username 
+            SET THE SESSION VARIABLE logged_in TO TRUE
+            RENDER THE HTML TEMPLATE 'landingpage.html'
+        ELSE
+            RENDER THE HTML TEMPLATE 'index.html' AND DISPLAY AN ERROR MESSAGE UNDERNEATH THE FORM
+        END IF
+    END IF
+
+FLASK ROUTE: THE USER SELECTS THE RETRIEVE OPTION
+    GET THE SESSION username VARIABLE AND ASSIGN IT TO username
+    READ IN THE DETAILS (ARRAY OF OBJECTS) USING readPasswordsCSV('passwords.csv',username,privateKey)
+
+    SET services TO AN EMPTY ARRAY
+
+    FIXED LOOP FOR i IN THE LENGTH OF THE DETAILS ARRAY OF OBJECTS
+        ADD details[i].getService() TO services
+    END FIXED LOOP
+
+    RENDER THE HTML TEMPLATE 'retrieve.html' WITH THE services ARRAY TO DISPLAY A DROP DOWN LIST OF THE SERVICES
+
+FLASK ROUTE: THE USER SUBMITS THE FORM ON 'retrieve.html'
+    IF THE SESSION VARIABLE logged_in IS TRUE TO VALIDATE THAT THE USER IS LOGGED IN
+        GET THE SESSION username VARIABLE AND ASSIGN IT TO username
+        READ IN THE DETAILS (ARRAY OF OBJECTS) USING readPasswordsCSV('passwords.csv',username,privateKey)
+
+        GET THE SERVICE INPUTTED FROM THE FORM AND ASSIGN THIS TO A SESSION VARIABLE CALLED displayedService
+
+        GET THE INDEX OF THE REQUESTED SERVICE BY CALLING findPassword(service,details)
+        IF THE SERVICE IS FOUND IN details
+            ON THE HTML TEMPLATE PAGE THAT IS DISPLAYED LATER, DISPLAY AN ERROR MESSAGE INSTEAD OF THE PASSWORD
+            SET THE time taken (real) TO 0.0
+        ELSE
+            SET password (string) TO details[index].getPassword()
+            SET timeTaken TO details[index].getStrength()
+        END IF
+
+        RENDER THE HTML TEMPLATE 'displayPass.html' WITH THE service, password, AND timeTaken VARIABLES DISPLAYED 
+    END IF
+
+FLASK ROUTE: THE USER SELECTS THE OPTION TO GENERATE A NEW PASSWORD
+    RENDER THE HTML TEMPLATE 'newpassword.html'
+
+FLASK ROUTE: THE USER SUBMITS THE FORM ON 'newpassword.html'
+    IF THE SESSION VARIABLE logged_in IS TRUE TO VALIDATE THAT THE USER IS LOGGED IN
+        IF THE METHOD OF THE FORM IS POST
+            GET THE SESSION username AND ASSIGN IT TO username
+            READ IN THE DETAILS (ARRAY OF OBJECTS) USING readPasswordsCSV('passwords.csv',username,privateKey)
+            GET THE SERVICE INPUTTED FROM THE FORM AND ASSIGN THIS TO A SESSION VARIABLE CALLED displayedService
+            SET createdBefore = False
+            FIXED LOOP FOR i IN RANGE(LENGTH OF details)
+                IF details[i].getService() IS EQUAL TO service
+                    SET createdBefore TO True
+                END IF
+            END FIXED LOOP
+            IF createdBefore IS False
+                SET details TO addPasswordArray(username,service,details,file,publicKey)
+            END IF
+            GET THE index OF THE REQUESTED SERVICE BY CALLING findPassword(service,details)
+            IF index IS EQUAL TO -1
+                ON THE HTML TEMPLATE PAGE THAT IS DISPLAYED LATER, DISPLAY AN ERROR MESSAGE INSTEAD OF THE PASSWORD
+                SET THE time taken (real) TO 0.0
+            ELSE
+                SET password (string) TO details[index].getPassword()
+                SET timeTaken TO details[index].getStrength()
+            END IF
+
+            RENDER THE HTML TEMPLATE 'displayPass.html' WITH THE service, password, AND timeTaken VARIABLES DISPLAYED
+        END IF
+    END IF 
+
+FLASK ROUTE: THE USER SELECTS THE OPTION TO LOG OUT
+    CLEAR THE SESSION VARIABLES
+    RENDER THE LOGIN PAGE
+
+FLASK ROUTE: THE USER SELECTS THE OPTION TO GO BACK 
+    CLEAR THE CURRENT SERVICE BEING DISPLAYED FROM THE SESSION VARIABLES
+    RENDER THE HTML TEMPLATE 'landingpage.html'
+
+FLASK ROUTE: THE USER SELECTS THE OPTION TO REGENERATE THE DISPLAYED PASSWORD ON 'displayPass.html'
+    GET THE SESSION username VARIABLE AND ASSIGN IT TO username
+    READ IN THE DETAILS (ARRAY OF OBJECTS) USING readPasswordsCSV('passwords.csv',username,privateKey)
+
+    GET THE SERVICE INPUTTED FROM THE FORM AND ASSIGN THIS TO A SESSION VARIABLE CALLED displayedService
+
+    GET THE INDEX OF THE REQUESTED SERVICE BY CALLING findPassword(service,details)
+    IF THE SERVICE IS FOUND IN details
+        ON THE HTML TEMPLATE PAGE THAT IS DISPLAYED LATER, DISPLAY AN ERROR MESSAGE INSTEAD OF THE PASSWORD
+        SET THE time taken (real) TO 0.0
+    ELSE
+        SET details TO regeneratePassword(index,details,username,privateKey,publicKey)
+        SET password (string) TO details[index].getPassword()
+        SET timeTaken TO details[index].getStrength()
+    END IF
+
+    RENDER THE HTML TEMPLATE 'displayPass.html' WITH THE service, password, AND timeTaken VARIABLES DISPLAYED
+
+IF THE PROGRAM BEING RUN IS THIS FILE
+    USE FLASK TO RUN THIS FILE
+
+for primenumbers.py 
+
+FUNCTION isPrimeTrialDiv(num)
+    IF num < 2 THEN
+        RETURN False
+    FOR i FROM 2 TO SQRT(num) DO
+        IF num MOD i EQUALS 0 THEN
+            RETURN False
+        END IF
+    END FOR
+    RETURN True
+END FUNCTION
+
+FUNCTION primeSieve(sieveSize)
+    SET sieve TO CREATE_ARRAY(sieveSize, True)
+    SET sieve[0] TO False
+    SET sieve[1] TO False
+    FOR i FROM 2 TO SQRT(sieveSize) DO
+        SET pointer TO i * 2
+        WHILE pointer < sieveSize DO
+            SET sieve[pointer] TO False
+            SET pointer TO pointer + i
+        END WHILE
+    END FOR
+    SET primes TO EMPTY_ARRAY
+    FOR i FROM 0 TO sieveSize DO
+        IF sieve[i] EQUALS True THEN
+            primes.APPEND(i)
+        END IF
+    END FOR
+    RETURN primes
+END FUNCTION
+
+FUNCTION rabinMiller(num)
+    IF num MOD 2 EQUALS 0 OR num < 2 THEN
+        RETURN False
+    END IF
+    IF num EQUALS 3 THEN
+        RETURN True
+    END IF
+    SET s TO num - 1
+    SET t TO 0
+    WHILE s MOD 2 EQUALS 0 DO
+        SET s TO s / 2
+        SET t TO t + 1
+    END WHILE
+    FOR trials FROM 1 TO 5 DO
+        SET a TO RANDOM_INT(2, num - 1)
+        SET v TO POW(a, s, num)
+        IF v NOT EQUALS 1 THEN
+            SET i TO 0
+            WHILE v NOT EQUALS (num - 1) DO
+                IF i EQUALS (t - 1) THEN
+                    RETURN False
+                ELSE
+                    SET i TO i + 1
+                    SET v TO (v^2) MOD num
+                END IF
+            END WHILE
+        END IF
+    END FOR
+    RETURN True
+END FUNCTION
+
+SET lowPrimes TO primeSieve(100)
+
+FUNCTION isPrime(num)
+    IF num < 2 THEN
+        RETURN False
+    END IF
+    FOR EACH prime IN lowPrimes DO
+        IF num MOD prime EQUALS 0 THEN
+            RETURN False
+        END IF
+    END FOR
+    RETURN rabinMiller(num)
+END FUNCTION
+
+FUNCTION generateLargePrime(keysize)
+    WHILE True DO
+        SET num TO RANDOM_INT(2^(keysize - 1), 2^keysize)
+        IF isPrime(num) THEN
+            RETURN num
+        END IF
+    END WHILE
+END FUNCTION
+
+
+for cryptomath.py
+
+FUNCTION gcd(a, b)
+    WHILE a != 0 DO
+        SET a, b TO b MOD a, a
+    END WHILE
+    RETURN b
+END FUNCTION
+
+FUNCTION findModInverse(a, m)
+    IF gcd(a, m) NOT EQUALS 1 THEN
+        RETURN None  // No mod inverse
+    END IF
+    // Extended Euclidean algorithm
+    SET u1, u2, u3 TO 1, 0, a
+    SET v1, v2, v3 TO 0, 1, m
+
+    WHILE v3 NOT EQUALS 0 DO
+        SET q TO u3 DIV v3
+        SET v1, v2, v3, u1, u2, u3 TO (u1 - q * v1), (u2 - q * v2), (u3 - q * v3), v1, v2, v3 
+    END WHILE
+    RETURN u1 MOD m
+END FUNCTION
+
+makePublicPrivateKeys.py
+
+FUNCTION generateKey(keySize)
+    SET p TO 0
+    SET q TO 0
+    WHILE p EQUALS q DO
+        SET p TO primeNum.generateLargePrime(keySize)
+        SET q TO primeNum.generateLargePrime(keySize)
+    END WHILE
+    SET n TO p * q
+
+    WHILE True DO
+        SET e TO RANDOM_INT(2^(keySize-1), 2^keySize)
+        IF cryptomath.gcd(e, (p-1)*(q-1)) EQUALS 1 THEN
+            BREAK
+        END IF
+    END WHILE
+    
+    SET d TO cryptomath.findModInverse(e, (p-1)*(q-1))
+
+    SET publicKey TO (n, e)
+    SET privateKey TO (n, d)
+    RETURN publicKey, privateKey
+END FUNCTION
+
+for RSA
+
+IMPORT modules
+
+SET symbols TO "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 "
+
+FUNCTION getBlocksFromText(message)
+    SET blockInteger TO 0
+    FIXED LOOP FOR i FROM 0 TO LENGTH(message) - 1 DO
+        SET blockInteger TO blockInteger + symbols.index(message[i]) * (LENGTH(symbols) ** i)
+    END FIXED LOOP
+    RETURN blockInteger
+END FUNCTION
+
+FUNCTION getTextFromBlocks(blockInteger, messageLength)
+    SET message TO ""
+    FIXED LOOP FOR i FROM 0 TO messageLength - 1 DO
+        SET indexOfCharacter TO blockInteger / (LENGTH(symbols) ** (messageLength - 1 - i))
+        SET character TO symbols[indexOfCharacter]
+        SET message TO message + character
+        SET blockInteger TO blockInteger MOD (LENGTH(symbols) ** (messageLength - 1 - i))
+    END FIXED LOOP
+    RETURN REVERSE(message)
+END FUNCTION
+
+FUNCTION encryptMessage(message, key)
+    SET n, e TO key[0], key[1]
+    SET block TO getBlocksFromText(message)
+    RETURN pow(block, e, n)
+END FUNCTION
+
+FUNCTION decryptMessage(encryptedMessage, messageLength, key)
+    SET n, d TO key[0], key[1]
+    SET block TO pow(encryptedMessage, d, n)
+    RETURN getTextFromBlocks(block, messageLength)
+END FUNCTION
+
+FUNCTION readKey(file)
+    SET key TO []
+    OPEN file FOR READING AS readfile
+    SET line TO readfile.READLINE().RSTRIP('\n')
+
+    WHILE line IS NOT EMPTY DO
+        SET items TO line.SPLIT(",") 
+        SET partOfKey TO CONVERT_TO_INT(items[0])
+        ADD partOfKey TO END OF key
+        SET line TO readfile.READLINE().RSTRIP('\n')
+    END WHILE
+
+    RETURN key
+END FUNCTION

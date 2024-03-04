@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<head>
+
+    <link rel="stylesheet" type = "text/css" href="{{ url_for('static', filename='stylepage.css')}}"/>
+
+<html>
+    <title>Password Manager</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+<div class="containter">
+    
+<div class = "normal">
+    
+    </div>
+<h1>your password for {{service}} is </h1> 
+
+<div id="displaypass">
+    <p>{{password}}</p>
+</div>
+
+<p style="text-align: center;"> &nbsp it will take {{timeTaken}} years to crack</p>
+
+<nav>
+    <ul id="myMenu" style="display: flex;">
+   <b><li><a href="/landing" id = "back">home</a></li></b>
+   <b><li><a href="/regenerate" id = "back">regenerate</a></li></b>
+   </ul></nav>   
+   
+</div>
+
+  
+
+</body>
+
+</html>

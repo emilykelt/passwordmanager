@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<head>
+
+    <link rel="stylesheet" type = "text/css" href="{{ url_for('static', filename='stylepage.css')}}"/>
+
+<html>
+    <title>Password Manager</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+<div class="'containter">
+    <nav>
+        <ul id="myMenu">
+       <b><li><a href="/landing" id = "back">back</a></li></b>
+   
+       </ul></nav>
+<div class = "normal">
+    
+    <br>
+<form action="/find" method="POST">
+
+        <label class="bluelabel" for="pass"><br>what is it used for?</label><br>
+
+        <select class = 'textform' id="'service" name="service">
+
+            {% for service in services %}
+                <option value="{{ service }}">{{ service }}</option>
+            {% endfor %}
+
+        </select>
+        <br><br>
+        <input class = 'button' type="submit" value="find" >
+      </form> 
+      
+
+    
+  </div> 
+</div>
+
+  
+
+</body>
+
+</html>

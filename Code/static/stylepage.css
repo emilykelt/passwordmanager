@@ -1,0 +1,179 @@
+
+body {
+    background-color: #69995D;
+  }
+  
+  div.outer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      display: flex;
+    
+  }
+  
+  div.head{
+      text-align: center;
+      margin: auto;
+      width: 35%;
+      padding: 0.5%;
+      background-color: #2C4251;
+      border-radius: 50px;
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      margin-bottom: 2rem;
+      margin-top: 2rem;
+  
+      
+  }
+  
+  div.inner {
+      text-align: left;
+      margin: auto;
+      width: 30%;
+      padding: 50px;
+      background-color: #C1C1C1;
+      border-radius: 50px;
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  
+  
+     
+  }
+  
+  
+  h1 {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      color:white ;
+  }
+  
+  label{
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      font-size: 100%;
+      color: white;
+      font-size: larger;
+      font-weight: bold;
+  }
+  
+p{
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      font-size: 100%;
+      color: black;
+      font-size: larger;
+      font-weight: bold;
+  }
+  
+  .button{
+      border-radius: 15px;
+      font-size: 100%;
+      background-color: #2C4251;
+      color: white;
+      width: 20%;  height: 2em;
+      border: none;
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      margin-bottom: 2rem;
+      font-size: larger;
+      font-weight: bold;
+	  transition: transform 0.5s;
+  
+  }
+  
+  .button:hover {
+	  
+  transform: scale(1.05, 1.05);
+
+}
+  
+  .textform{
+      width: 100%;
+      border: none;
+  }
+  
+  .bluelabel{
+    color: #2C4251;
+  }
+  
+  nav {
+  float: left;
+  width: 30%;
+  padding: 20px;
+}
+
+#nav a{
+
+     text-decoration:none;
+}
+
+
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#myMenu li a {
+  border-radius: 25px;
+  display: block;
+  color: white;
+  background-color: #2C4251;
+  padding: 15px 30px;
+  text-decoration: none;
+  transition: transform 0.5s;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#myMenu li a:hover {
+  transform: scale(1.05, 1.05);
+
+  color: white;
+}
+
+#myMenu li a.active {
+  background-color: #555;
+  color: white;
+} 
+
+#landingTitle{
+	float: right;
+	padding: 30px;
+}
+
+#logout{
+	width: 20%;
+
+}
+
+.normal {
+	padding: 50px;
+	width: 30%;
+}
+
+#righty{
+	float: right;
+}
+
+#displaypass{
+
+  text-align: left;
+  margin: auto;
+  padding: 50px;
+  background-color: #C1C1C1;
+  border-radius: 50px;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+
+#back{
+  display:inline-block;
+  border-radius: 15px;
+  font-size: 100%;
+  background-color: #2C4251;
+  color: white;
+  width: fit-content;  
+  border: none;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  font-size: larger;
+  font-weight: bold;
+	transition: transform 0.5s;
+  margin-left: 4em;
+
+}
