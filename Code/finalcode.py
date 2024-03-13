@@ -89,7 +89,6 @@ class Password(superLogin):
                 valid = True
 
 
-
     def timeTaken(self):
         
         password = self._password
@@ -126,225 +125,274 @@ class Password(superLogin):
         outputstring += str(self._username) + " " + str(self._service) + " " + str(self._password) + " " + str(self._strength)
         return outputstring
 
-#FILE HANDLING
-def readLoginCSV(file,privateKey):
-    users = []
-    with open(file) as readfile:    #prepares to read data from text file 
-        line = readfile.readline().rstrip('\n')
 
-        while line: #repeats for every line
-            items = line.split(",")
 
-            user= superLogin()
-            
-            username= str(items[0])
-            password = int(items[1])
-            length = int(items[2])
+class Manager():
+    def __init__(self):
+        self._file = "login.csv"    
+        self._publicKey = readKey('publickey.csv')  #calls readKey function from RSA
+        self._privateKey = readKey('privatekey.csv')
+        self._users = []    #array of superLogin objects
+        self.readLoginCSV() #read values into users array of objects
+        self._details = [] #array of Password objects
+        self._currentUser = ""
 
-            #decrypt passwords
-            password = decryptMessage(password, length, privateKey)
+    #GETTERS
+    def getUsers(self):
+        return self._users
+    
+    def getDetails(self):
+        return self._details
+    
+    #SETTER
+    def setCurrentUser(self,masterusername):
+        self._currentUser = masterusername
+    
+    #DISPLAY CONTENTS OF ARRAY OF OBEJCTS
+    def displayDetails(self):
+        for i in range(len(self._details)):
+            print(self._details[i])
+    
+    def displayUsers(self):
+        for i in range(10):
+            print(self._users[i])
 
-            user.setUsername(username)
-            user.setPassword(password)
 
-            users.append(user)
-            line = readfile.readline().rstrip('\n')   
+    #READ CURRENTLY LOGGED IN USER'S PASSWORDS FROM FILE
+    def readPasswordsCSV(self):
+        masterusername = self._currentUser  #master username is the current user that is active
+        privateKey = self._privateKey
+        file = "passwords.csv"
+        self._details = []  #reset details array, as this method will run when a new user is logged in 
 
-    return users  
+        with open(file) as readfile:    #prepares to read data from text file 
+            line = readfile.readline().rstrip('\n')
 
-def readPasswordsCSV(file, masterusername,privateKey): #master username is the current user that is active
-    details = []
-    with open(file) as readfile:    #prepares to read data from text file 
-        line = readfile.readline().rstrip('\n')
-
-        while line: #repeats for every line
-            items = line.split(",") #splits items up
-            
-            #get username
-            username= str(items[0])
-
-            #see if password belongs to the user logged in (masterusername)
-            if username == masterusername:
+            while line: #repeats for every line
+                items = line.split(",") #splits items up
                 
-                #read in rest to array of objects
+                #get username
+                username= str(items[0])
+
+                #see if password belongs to the user logged in (masterusername)
+                if username == masterusername:
+                    
+                    #read in rest to array of objects
+                    password = int(items[1])
+                    service = str(items[2])
+                    strength = float(items[3])
+                    lengthPass = int(items[4])
+
+                    #decrypt the encrypted password stored in the file
+                    password = decryptMessage(password, lengthPass, privateKey)
+                    
+                    #create instance of object
+                    detail= Password()
+
+                    #use setter methods
+                    detail.setUsername(username)
+                    detail.setPassword(password)
+                    detail.setService(service)
+                    detail.setTimeTaken(strength)
+
+                    #add object to array
+                    self._details.append(detail)
+                
+                #next line
+                line = readfile.readline().rstrip('\n')   
+
+    
+    #READ LOGIN DETAILS
+    def readLoginCSV(self):
+        privateKey = self._privateKey
+        file = self._file
+        users = []
+        with open(file) as readfile:    #prepares to read data from text file 
+            line = readfile.readline().rstrip('\n')
+
+            while line: #repeats for every line
+                items = line.split(",")
+
+                user= superLogin()
+                
+                username= str(items[0])
                 password = int(items[1])
-                service = str(items[2])
-                strength = float(items[3])
-                lengthPass = int(items[4])
+                length = int(items[2])
 
-                #decrypt the encrypted password stored in the file
-                password = decryptMessage(password, lengthPass, privateKey)
+                #decrypt passwords
+                password = decryptMessage(password, length, privateKey)
+
+                user.setUsername(username)
+                user.setPassword(password)
+
+                users.append(user)
+                line = readfile.readline().rstrip('\n')   
+
+        self._users = users
+
+    #ALGORITHMS
+    def sortArrayObjects(self):
+        list = self._details
+        value = 0
+        index = 0
+        for i in range(1,len(list)):
+            value = list[i]   #double check oop sorting
+            index = i
+            while index > 0 and value.getService() < list[index-1].getService():
+                list[index]=list[index-1]  
+                index = index-1
+            list[index] = value
+
+        self._details = list
+
+    #validation to make sure username and password match
+    def validateLogin(self, inputUser,inputPass): 
+        valid = False
+        for i in range(len(self._users)): 
+            if self._users[i].getUsername() == inputUser and self._users[i].getPassword() == inputPass: #compare current username and password
+                valid = True
+                self._currentUser = inputUser
+
+        return valid
+
+
+    #NEW PASSWORD 
+    def addPasswordArray(self, service):  #test encryption here
+        detail= Password()
+
+        publicKey = self._publicKey
+        details = self._details
+        file = "passwords.csv"
+        masterusername = self._currentUser
+
+        #use setter methods
+        detail.setUsername(masterusername)
+        detail.setService(service)
+        #password and time taken will auto generate
+
+        #encrypt generated password
+        encryptedPass = encryptMessage(detail.getPassword(),publicKey)
+        
+        #add object to array
+        details.append(detail)
+
+        #write to file
+        DataFile = open(file,'a')
+        DataFile.write(detail.getUsername() + "," + str(encryptedPass) + "," + detail.getService() + "," + str(detail.getStrength())+ "," + str(len(detail.getPassword()))+"\n")
+        DataFile.close()
+
+        #sort password details into ascending password order, do this every time a new password is added
+        self.sortArrayObjects()
+
+        self._details = details
+
+
+    #FIND PASSWORD WITH BINARY SEARCH
+    def findPassword(self, goal):
+        details = self._details
+        self.sortArrayObjects() # insertion sorts the passwords first
+        
+        found = False
+        startpos = 0
+        endpos = len(details) -1
+
+        while (startpos <= endpos) and found == False:
+            
+            middle = (startpos+endpos)//2 #// is integer div
+            
+            if details[middle].getService() == goal:
+                found = True
+                return middle
                 
-                #create instance of object
-                detail= Password()
+            elif details[middle].getService() <goal:
+                startpos = middle + 1
+            else:
+                endpos = middle - 1
 
-                #use setter methods
-                detail.setUsername(username)
-                detail.setPassword(password)
-                detail.setService(service)
-                detail.setTimeTaken(strength)
+        if found == False:
+            return -1
 
-                #add object to array
-                details.append(detail)
-            
-            #next line
-            line = readfile.readline().rstrip('\n')   
+    #REGENERATE PASSWORD
+    def regeneratePassword(self, index): 
+        details = self._details
 
-    return details  
-
-#ALGORITHMS
-def sortArrayObjects(list):
-    value = 0
-    index = 0
-    for i in range(1,len(list)):
-        value = list[i]   #double check oop sorting
-        index = i
-        while index > 0 and value.getService() < list[index-1].getService():
-            list[index]=list[index-1]  
-            index = index-1
-        list[index] = value
-
-    return list
-
-def validateLogin(inputUser,inputPass,users):  
-    valid = False
-    for i in range(len(users)): 
-        if users[i].getUsername() == inputUser and users[i].getPassword() == inputPass: #compare current username and password
-            valid = True
-
-    return valid
-
-
-#NEW PASSWORD 
-def addPasswordArray(masterusername,service,details,file,publicKey):  #test encryption here
-    detail= Password()
-
-    #use setter methods
-    detail.setUsername(masterusername)
-    detail.setService(service)
-    #password and time taken will auto generate
-
-    #encrypt generated password
-    encryptedPass = encryptMessage(detail.getPassword(),publicKey)
-    
-    #add object to array
-    details.append(detail)
-
-    #write to file
-    DataFile = open(file,'a')
-    DataFile.write(detail.getUsername() + "," + str(encryptedPass) + "," + detail.getService() + "," + str(detail.getStrength())+ "," + str(len(detail.getPassword()))+"\n")
-    DataFile.close()
-
-    #sort password details into ascending password order, do this every time a new password is added
-    details = sortArrayObjects(details)
-    
-    return details
-
-
-
-#FIND PASSWORD
-def findPassword(goal,details):
-    details = sortArrayObjects(details) # insertion sorts the passwords first
-    
-    found = False
-    startpos = 0
-    endpos = len(details) -1
-
-    while (startpos <= endpos) and found == False:
-        
-        middle = (startpos+endpos)//2 #// is integer div
-        
-        if details[middle].getService() == goal:
-            found = True
-            return middle
-            
-        elif details[middle].getService() <goal:
-            startpos = middle + 1
+        if index == -1: #validate that the password exists first
+            print("Cannot regenerate, service not found")
         else:
-            endpos = middle - 1
+            password = details[index].generatePassword()
+            details[index].setPassword(password)
+            details[index].validatePassword()
+            details[index].setTimeTaken(details[index].timeTaken()) 
 
-    if found == False:
-        return -1
+            self.editPasswordFile()
 
-def regeneratePassword(index, details, masterusername, publicKey): 
-    if index == -1:
-        print("Cannot regenerate, service not found")
-    else:
-        password = details[index].generatePassword()
-        details[index].setPassword(password)
-        details[index].validatePassword()
-        details[index].setTimeTaken(details[index].timeTaken()) 
+        #write regenerated password back to details
+        self._details = details
 
-        editPasswordFile('passwords.csv', details, masterusername, publicKey )
+    #rewrite whole CSV file when details array has changed
+    def editPasswordFile(self): 
+        details = self._details
+        publicKey = self._publicKey
+        masterusername = self._currentUser
+        file = "passwords.csv"
 
-    return details
+        lengths = [] #parralel 1D array to store the lengths of the passwords that are already stored in the CSV
+        
+        #get everything from file, not including the currently logged in user, decrypt the passwords
+        unactive_details = []
+        with open(file) as readfile:    #prepares to read data from text file 
+            line = readfile.readline().rstrip('\n')
 
-def editPasswordFile(file, details, masterusername, publicKey ): 
-    lengths = [] #parralel 1D array to store the lengths of the passwords that are already stored in the CSV
+            while line: #repeats for every line
+                items = line.split(",") #splits items up
+                
+                #get username
+                username= str(items[0])
+
+                #saves the data of all of the users who arent logged in
+                #as if we read in user who was logged in, would be unable to save 
+                if username != masterusername:
+                    
+                    #read in rest to array of objects
+                    password = str(items[1])
+                    service = str(items[2])
+                    strength = float(items[3])
+                    lengthPass = int(items[4])
+                    
+                    #create instance of object
+                    detail= Password()
+
+                    #use setter methods
+                    detail.setUsername(username)
+                    detail.setPassword(password)
+                    detail.setService(service)
+                    detail.setTimeTaken(strength)
+                    lengths.append(lengthPass)
+
+                    #add object to array
+                    unactive_details.append(detail)
+                
+                #next line
+                line = readfile.readline().rstrip('\n')   
+
+        #write the password details of those who aren't logged in
+        DataFile = open(file, 'w')
+        for i in range(len(unactive_details)):
+            DataFile.write(unactive_details[i].getUsername() + "," + unactive_details[i].getPassword() + "," + unactive_details[i].getService() + "," + str(unactive_details[i].getStrength())+ "," + str(lengths[i])+"\n")  
     
-    #get everything from file, not including the currently logged in user, decrypt the passwords
-    unactive_details = []
-    with open(file) as readfile:    #prepares to read data from text file 
-        line = readfile.readline().rstrip('\n')
+        #write the details of the currently logged in user to file
+        for i in range(len(details)):
+            DataFile.write(details[i].getUsername() + "," + str(encryptMessage(details[i].getPassword(),publicKey)) + "," + details[i].getService() + "," + str(details[i].getStrength())+ "," + str(len(details[i].getPassword()))+"\n")  
+        DataFile.close() 
 
-        while line: #repeats for every line
-            items = line.split(",") #splits items up
-            
-            #get username
-            username= str(items[0])
-
-            #saves the data of all of the users who arent logged in
-            #as if we read in user who was logged in, would be unable to save 
-            if username != masterusername:
-                
-                #read in rest to array of objects
-                password = str(items[1])
-                service = str(items[2])
-                strength = float(items[3])
-                lengthPass = int(items[4])
-                
-                #create instance of object
-                detail= Password()
-
-                #use setter methods
-                detail.setUsername(username)
-                detail.setPassword(password)
-                detail.setService(service)
-                detail.setTimeTaken(strength)
-                lengths.append(lengthPass)
-
-                #add object to array
-                unactive_details.append(detail)
-            
-            #next line
-            line = readfile.readline().rstrip('\n')   
-
-    #write the password details of those who aren't logged in
-    DataFile = open(file, 'w')
-    for i in range(len(unactive_details)):
-        DataFile.write(unactive_details[i].getUsername() + "," + unactive_details[i].getPassword() + "," + unactive_details[i].getService() + "," + str(unactive_details[i].getStrength())+ "," + str(lengths[i])+"\n")  
- 
-    #write the details of the currently logged in user to file
-    for i in range(len(details)):
-        DataFile.write(details[i].getUsername() + "," + str(encryptMessage(details[i].getPassword(),publicKey)) + "," + details[i].getService() + "," + str(details[i].getStrength())+ "," + str(len(details[i].getPassword()))+"\n")  
-    DataFile.close() 
-
-#PasswordExample = Password()
-#PasswordExample.setPassword('HelloHelloHelloHelloHello')
-#print(PasswordExample.getPassword())
+    def logOut(self):
+        self._currentUser = ""
+        self._details = [] #clears password details inbetween logging out and logging in again
 
 """
-
 #MAIN FOR TESTING
-
-#read in data to array for login
-file = "login.csv"
-
-publicKey = readKey('publickey.csv')
-privateKey = readKey('privatekey.csv')
-
-users = readLoginCSV(file, privateKey)
-
+#initialise object
+Program = Manager()
 
 #set masterusername after login validation
 main = True
@@ -354,7 +402,7 @@ while main == True: #main loop
     inputUser = str(input("input username: "))
     inputPass = str(input("input password: "))
     
-    valid = validateLogin(inputUser,inputPass,users)
+    valid = Program.validateLogin(inputUser,inputPass)
 
     while valid != True:
         print("invalid. check username and password and try again.")
@@ -371,21 +419,16 @@ while main == True: #main loop
             inputUser = str(input("input username: "))
             inputPass = str(input("input password: "))
 
-            valid = validateLogin(inputUser,inputPass,users)
+            valid = Program.validateLogin(inputUser,inputPass)
 
     while valid == True:  #login loop
         print("valid\n")
-        masterusername = inputUser
 
-        file = "passwords.csv"
-        details = readPasswordsCSV(file,masterusername,privateKey)
+        Program.readPasswordsCSV()
+
+        Program.sortArrayObjects()
         
-        for i in range(len(details)):
-            print(details[i])
-
-        details = sortArrayObjects(details)
-        for i in range(len(details)):
-            print(details[i])
+        Program.displayDetails()
 
         #loop to simulate the program, able to keep repeating actions, add password or find password
         choice = ""
@@ -403,35 +446,33 @@ while main == True: #main loop
             
             elif choice == 'n':
                 service = str(input("service to add a password to: "))
-                details = addPasswordArray(masterusername,service,details,file,publicKey)
+                Program.addPasswordArray(service)
 
-                #print out array
-                for i in range(len(details)):
-                    print(details[i].getService())
+                Program.displayDetails()
                     
             elif choice =='f':
                 goal = str(input("What is the service of the password you are searching for?: "))
-                index = findPassword(goal,details)
+                index = Program.findPassword(goal)
                 print(str(index))
+                result = Program.getDetails()
                 if index != -1:
-                    print("Your password is: ", details[index].getPassword(),"\nIt will take ", str(details[index].timeTaken()), " years to crack with bruteforce.")
+                    print("Your password is: ", result[index].getPassword(),"\nIt will take ", str(result[index].timeTaken()), " years to crack with bruteforce.")
                 
             elif choice == 'r':
                 goal = str(input("What is the service of the password you are wanting to regenerate?: "))
-                index = findPassword(goal,details)
+                index = Program.findPassword(goal)
                 if index != -1:
-                    details = regeneratePassword(index,details,masterusername, privateKey, publicKey )
-                    print(details[index].getPassword())
+                    Program.regeneratePassword(index)
+                    result = Program.getDetails()
+                    print(result[index].getPassword())
                 
             else:
                 print("invalid choice")
         
-
 
 notes to self:L
 
 username is master username in all cases
 
 username    password    service     strength    length of password
-
 """

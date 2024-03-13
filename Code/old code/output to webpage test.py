@@ -1,4 +1,4 @@
-from finalcode import *
+from finalcodeFNC import *
 import webbrowser
 
 def displayPasswordonWeb(password):

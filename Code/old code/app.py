@@ -1,13 +1,19 @@
 #IMPORTS
 from flask import Flask, request, render_template, session
-from finalcode import * 
+from finalcodeFNC import * 
 
-#instantiase object
-Program = Manager()
+#read in files
+file = "login.csv"
+
+publicKey = readKey('publickey.csv')
+privateKey = readKey('privatekey.csv')
+
+
+users = readLoginCSV(file, privateKey)
 
 #set up flask
 app = Flask(__name__)
-app.secret_key = "7ae0e9e033b5" #flask needs this for the session variables
+app.secret_key = str(privateKey)
 
 #on run open the login screen
 @app.route("/")
@@ -27,7 +33,7 @@ def submit():
         password = request.form['password']
 
         #validate login using function
-        valid = Program.validateLogin(username,password)
+        valid = validateLogin(username,password,users)
 
         #if the username and password match then session variables are stored for username and logged_in 
         if valid == True:
@@ -47,18 +53,14 @@ def retrieve():
     #get session username
     username = session.get('username')
 
-    Program.setCurrentUser(username)
-
-    #set details array of records up by reading in from current user
-    Program.readPasswordsCSV()
-    Program.sortArrayObjects()
+    file = "passwords.csv"
+    details = readPasswordsCSV(file,username,privateKey)
 
     #get services as an array in order to display them as options for the user to choose from
     services = []
 
-    passwords = Program.getDetails()
-    for i in range(len(passwords)):
-        services.append(passwords[i].getService())
+    for i in range(len(details)):
+        services.append(details[i].getService())
 
     return render_template('retrieve.html', services=services)
 
@@ -71,9 +73,8 @@ def find():
 
             username = session.get('username')
 
-            Program.setCurrentUser(username)
-            Program.readPasswordsCSV()
-            Program.sortArrayObjects()
+            file = "passwords.csv"
+            details = readPasswordsCSV(file,username,privateKey)
 
             #get service from form
             service = request.form['service']
@@ -81,14 +82,13 @@ def find():
             session['displayedService'] = service
 
             #find password to display, validate that it exists and if it doesnt' then display an error message
-            index = Program.findPassword(service)
+            index = findPassword(service,details)
             if index == -1:
                 password = 'Not Found. Return to home page to create a new Password'
                 timeTaken = 0
             else:
-                passwords = Program.getDetails()
-                password = passwords[index].getPassword()
-                timeTaken = passwords[index].getStrength()
+                password = details[index].getPassword()
+                timeTaken = details[index].getStrength()
 
             return render_template('displayPass.html',service=service,password=password,timeTaken=timeTaken)
 
@@ -108,28 +108,33 @@ def add():
 
             username = session.get('username')
 
-            Program.setCurrentUser(username)
-            Program.readPasswordsCSV()
-            Program.sortArrayObjects()
+            file = "passwords.csv"
+            details = readPasswordsCSV(file,username,privateKey)
 
             service = request.form['service']
             session['displayedService'] = service
 
-            #checks if the password already exists, and if it doesn't then it creates a new password
-            if Program.findPassword(service) == -1:
-                Program.addPasswordArray(service)
+            #checks if the password already exists
+            createdBefore = False
+            for i in range(len(details)):                   #could i use binary search?
+                if details[i].getService() == service:
+                    createdBefore=True
+
+            #validation to make sure the password doesn't exist before creating the password
+            if createdBefore == False:
+                #call function to add a password
+                details = addPasswordArray(username,service,details,file,publicKey)
             
             #display the password using the find function
-            index = Program.findPassword(service)
+            index = findPassword(service,details)
 
             #displays either error message or password
             if index == -1:
                 password = 'Error creating password. Please try again'
                 timeTaken = 0
             else:
-                passwords = Program.getDetails()
-                password = passwords[index].getPassword()
-                timeTaken = passwords[index].getStrength()
+                password = details[index].getPassword()
+                timeTaken = details[index].getStrength()
 
             return render_template('displayPass.html',service=service,password=password,timeTaken=timeTaken)
 
@@ -137,8 +142,7 @@ def add():
 @app.route("/logout")
 
 def logout():
-    Program.logOut()
-    session.clear() #clears all of the session variables, so the user must log in again
+    session.clear()#clears all of the session variables, so the user must log in again
     return render_template('index.html')
 
 @app.route("/landing")
@@ -155,24 +159,22 @@ def landing():
 def regen():
     username = session.get('username')
 
-    Program.setCurrentUser(username)
-    Program.readPasswordsCSV()
-    Program.sortArrayObjects()
+    file = "passwords.csv"
+    details = readPasswordsCSV(file,username,privateKey)
 
     service = session.get('displayedService')
 
     #find the password that is displayed currently
-    index = Program.findPassword(service)
+    index = findPassword(service,details)
 
     #regenerate and display
     if index == -1:
         password = 'Not Found. Return to home page to create a new Password'
         timeTaken = 0
     else:   
-        Program.regeneratePassword(index)    #regenerate the password by calling a function
-        passwords = Program.getDetails()
-        password = passwords[index].getPassword()
-        timeTaken = passwords[index].getStrength()
+        details = regeneratePassword(index,details,username, publicKey )    #regenerate the password by calling a function
+        password = details[index].getPassword()
+        timeTaken = details[index].getStrength()
 
     return render_template('displayPass.html',service=service,password=password,timeTaken=timeTaken)
 

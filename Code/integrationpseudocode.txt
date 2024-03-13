@@ -1,0 +1,131 @@
+1 instantiase object Program from Manager
+
+2 set up flask
+
+3 flask route: first page
+    3.1 render the html template 'index.html'
+4 end flask route
+
+5 flask route: the login form is submitted
+    5.1 if the method of the form is post
+        5.1.1 get username and password from the form and store them as strings
+        5.1.2 set valid (boolean) to method in Program object validatelogin(username,password,users)
+        5.1.3 if valid is true
+            5.1.4 set the session variable username to username 
+            5.1.5 set the session variable logged_in to true
+            5.1.6 render the html template 'landingpage.html'
+        5.1.7 else
+            5.1.8 render the html template 'index.html' and display an error message underneath the form
+        5.1.9 end if
+    5.2 end if
+6 end flask route
+
+7 flask route: the user selects the retrieve option
+    7.1 get the session username variable and assign it to username
+    7.2 use setter method in Program to set current user to username
+    7.3 read in the details (array of objects) using readpasswordscsv method in Program
+    7.4 call  sortArrayObjects method in Program 
+
+    7.5 set services to an empty array
+
+    7.6 set password to Program getDetails method 
+    7.7 fixed loop for i in the length of passwords
+        7.7.1 add passwords[i].getservice() to services
+    7.8 end fixed loop
+
+    7.9 render the html template 'retrieve.html' with the services array to display a drop down list of the services
+8 end flask route
+
+9 flask route: the user submits the form on 'retrieve.html'
+    9.1 if the session variable logged_in is true to validate that the user is logged in
+        9.1.1 get the session username variable and assign it to username
+        9.1.2 use setter method in Program to set current user to username
+        
+        9.1.3 read in the details (array of objects) using readpasswordscsv method in Program
+        9.1.4 call sortArrayObjects from Program
+
+        9.1.5 get the service inputted from the form and assign this to a session variable called displayedservice
+
+        9.1.6 get the index of the requested service by calling findpassword(service)
+        9.1.7 if the service is not found in (array of objects) details 
+            9.1.8 on the html template page that is displayed later, display an error message instead of the password
+            9.1.9 set the time taken to 0.0
+        9.1.10 else
+            9.1.11 set passwords to getDetails from Program
+            9.1.12 set password (string) to details[index].getpassword()
+            9.1.13 set timetaken to details[index].getstrength()
+       9.1.14  end if
+
+        9.1.15 render the html template 'displaypass.html' with the service, password, and timetaken variables displayed 
+    9.2 end if
+10 end flask route
+
+11 flask route: the user selects the option to generate a new password
+    11.1 render the html template 'newpassword.html'
+12 end flask route
+
+13 flask route: the user submits the form on 'newpassword.html'
+    13.1 if the session variable logged_in is true to validate that the user is logged in
+        13.1.1 if the method of the form is post
+            13.1.2 get the session username and assign it to username
+            13.1.3 use setter method in Program to set current user to username
+            13.1.4 read in the details (array of objects) using readpasswordscsv method in Program
+            13.1.5 use sorting method in Program
+
+            13.1.6 get the service inputted from the form and assign this to a session variable called displayedservice
+            13.1.7 if findpassword method in Program returns -1
+                13.1.8 call addPasswordArray method in Program 
+            13.1.9 end if
+
+            13.1.10 get the index of the requested service by calling findpassword(service) method
+            13.1.11 if index is equal to -1, the service is not found
+                13.1.12 on the html template page that is displayed later, display an error message instead of the password
+                13.1.13 set the time taken (real) to 0.0
+           13.1.14 else
+                13.1.15 set passwords to getDetails method from Program
+                13.1.16 set password (string) to passwords[index].getpassword()
+                13.1.17 set timetaken to passwords[index].getstrength()
+            13.1.18 end if
+
+            13.1.19 render the html template 'displaypass.html' with the service, password, and timetaken variables displayed
+        13.1.20 end if
+    13.2 end if 
+14 end flask route
+
+15 flask route: the user selects the option to log out
+    15.1 call Program logout method
+    15.2 clear the session variables
+    15.3 render the login page
+16 end flask route
+
+17 flask route: the user selects the option to go back 
+    17.1 clear the current service being displayed from the session variables
+    17.2 render the html template 'landingpage.html'
+18 end flask route
+
+19 flask route: the user selects the option to regenerate the displayed password on 'displaypass.html'
+    19.1 get the session username variable and assign it to username
+    19.2 use setter method in Program to set current user to username
+
+    19.3 use readpasswordscsv method in Program
+    19.4 use sortArrayObjects method in Program
+
+    19.5 get the service inputted from the form and assign this to a session variable called displayedservice
+
+    19.6 get the index of the requested service by calling findpassword(service) method in Program
+    19.7 if the service is not found in details
+        19.7.1  on the html template page that is displayed later, display an error message instead of the password
+        19.7.2 set the time taken (real) to 0.0
+    19.8 else
+        19.8.1 call regeneratepassword(index) method in Program
+        19.8.2 set passwords to Program method getDetails()
+        19.8.3 set password (string) to passwords[index].getpassword()
+        19.8.4 set timetaken to passwords[index].getstrength()
+    19.9 end if
+
+    19.10 render the html template 'displaypass.html' with the service, password, and timetaken variables displayed
+20 end flask route
+
+21 if the program being run is this file
+    21.1 use flask to run this file 
+22 end if
